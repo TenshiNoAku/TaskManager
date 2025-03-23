@@ -1,0 +1,13 @@
+framework:
+    cache:
+        pools:
+            cache.my_redis:
+                adapter: cache.adapter.redis
+                provider: app.my_custom_redis_provider
+
+services:
+    app.my_custom_redis_provider:
+        class: \Redis
+        factory: ['Symfony\Component\Cache\Adapter\RedisAdapter', 'createConnection']
+        arguments:
+            - 'redis://127.0.0.1:6379'

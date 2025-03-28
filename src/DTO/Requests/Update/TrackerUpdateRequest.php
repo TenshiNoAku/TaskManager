@@ -1,9 +1,8 @@
 <?php
-namespace App\DTO\Update;
+
+namespace App\DTO\Requests\Update;
 use Symfony\Component\Validator\Constraints as Assert;
-
-class ProjectUpdateDTO
-
+class TrackerUpdateRequest
 {
     public function __construct(
         #[Assert\NotBlank]
@@ -13,7 +12,4 @@ class ProjectUpdateDTO
     {
 
     }
-
-
-
 }

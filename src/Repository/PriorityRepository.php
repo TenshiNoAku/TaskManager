@@ -3,7 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\Priority;
+use App\Traits\FindOfFailTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -11,9 +13,19 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class PriorityRepository extends ServiceEntityRepository
 {
+    use FindOfFailTrait;
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Priority::class);
+    }
+
+    public function findWithPagination()
+    {
+        $dql = "SELECT p FROM App\Entity\Priority p";
+        $query = $this->getEntityManager()->createQuery($dql);
+        $paginator = new Paginator($query, true);
+        dd($paginator);
+
     }
 
 

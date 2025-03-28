@@ -21,7 +21,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class ProjectService
 {
     use EntityNotFoundTrait;
-    use HandleIdInURLTrait;
     private EntityManagerInterface $entityManager;
     private SerializerInterface $serializer;
     private RequestStack $requestStack;

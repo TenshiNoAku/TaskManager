@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Repository\ProjectRepository;
+use App\Repository\TrackerRepository;
 use App\Traits\GeneratedIdTrait;
 use App\Traits\CreatedAtTrait;
 use App\Traits\UpdatedAtTrait;

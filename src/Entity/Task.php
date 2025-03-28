@@ -4,10 +4,8 @@ namespace App\Entity;
 
 use App\Repository\TaskRepository;
 use App\Traits\GeneratedIdTrait;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
-use \JsonSerializable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
@@ -15,12 +13,12 @@ class Task
 {
     use GeneratedIdTrait;
 
-    #[ORM\ManyToOne(inversedBy: 'tasks')]
+    #[ORM\ManyToOne(fetch: 'EAGER', inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Project $project = null;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\ManyToOne(fetch: 'EAGER')]
+    #[ORM\JoinColumn(nullable: false )]
     private ?Tracker $tracker = null;
 
     #[ORM\Column(length: 255)]
@@ -29,11 +27,11 @@ class Task
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(fetch: 'EAGER')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Status $status = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne (fetch: 'EAGER')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Priority $priority = null;
 
@@ -41,6 +39,7 @@ class Task
     private ?\DateTimeInterface $fromDate = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Assert\GreaterThan(propertyPath: "from_date")]
     private ?\DateTimeInterface $deadline = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]

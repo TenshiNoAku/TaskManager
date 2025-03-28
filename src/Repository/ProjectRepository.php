@@ -4,8 +4,10 @@ namespace App\Repository;
 
 use App\Entity\Project;
 use App\Services\ServiceException;
+use App\Traits\FindOfFailTrait;
 use App\Traits\HandleIdInURLTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -14,33 +16,23 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ProjectRepository extends ServiceEntityRepository
 {
-    use HandleIdInURLTrait;
+    use FindOfFailTrait;
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Project::class);
     }
 
-    public function findOrFail($id) : Project
-    {
-        $errors = $this->handleId($id);
-        if (!empty($errors)) {
-            throw new ServiceException(400,json_encode($errors),null,['Content-Type: application/json']);
-        }
 
-        $project = $this->find($id);
+//TODO убрать итератор
 
-        if(!$project){
-            throw new ServiceException(404,json_encode([
-                    "error" =>
-                        ["code" => 404,
-                            "message" => "Resource not found",
-                            "details" => "The requested resource with ID '$id' could not be found.",
-                        ]],JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                ,null,['Content-Type: application/json']);
-        }
 
-        return $project;
-    }
+//    public function findWithPagination(int $page) {
+//        $dql = "SELECT p FROM App\Entity\Project p";
+//        $query = $this->getEntityManager()->createQuery($dql)->setMaxResults(2)->setFirstResult(2*($page-1))->setHydrationMode(\Doctrine\ORM\Query::HYDRATE_ARRAY);
+//        $paginator = new Paginator($query, $fetchJoinCollection = true);
+//        return iterator_to_array($paginator->getIterator());
+//    }
+
     //    /**
     //     * @return Project[] Returns an array of Project objects
     //     */

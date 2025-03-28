@@ -3,38 +3,30 @@
 namespace App\Controller;
 
 
-use App\DTO\Create\ProjectCreateDTO;
-use App\DTO\Update\ProjectUpdateDTO;
+use App\DTO\Entity\ProjectEntityDTO;
+use App\DTO\Entity\TasksEntityDTO;
+use App\DTO\Requests\Create\ProjectCreateRequest;
+use App\DTO\Requests\JsonApiResponse;
+use App\DTO\Requests\Update\ProjectUpdateRequest;
+use App\Entity\Project;
 use App\Entity\Task;
 use App\Services\ProjectService;
-use App\Traits\HandleIdInURLTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
-use App\Entity\Project;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/api/v1/projects')]
 final class ProjectController extends AbstractController
 {
-    use HandleIdInURLTrait;
 
-    private SerializerInterface $serializer;
     private EntityManagerInterface $entityManager;
 
-    public function __construct(SerializerInterface $serializer , EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager)
     {
-        $this->serializer = $serializer;
         $this->entityManager = $entityManager;
     }
 
@@ -44,74 +36,80 @@ final class ProjectController extends AbstractController
     public function index(ProjectService $projectService) : Response
     {
         $projects = new ArrayCollection($this->entityManager->getRepository(Project::class)->findAll());
-        return new JsonResponse(
-            $projects->map(function (Project $project) {
-                return [
-                    'id' => $project->getId(),
-                    'name' => $project->getName()
-                ];
-            })->toArray()
-        );
+
+        $projectDTOs = $projects->map(function (Project $project) {
+                $projectDTO = new ProjectEntityDTO($project);
+                return $projectDTO->toArray();
+            })->toArray();
+        return new JsonApiResponse($projectDTOs);
+
     }
 
     #[Route('/{id}/tasks/', name: 'project_tasks', methods: ['GET'])]
 
-    public function getTasks(ProjectService $projectService, $id)
+    public function getTasks($id) : JsonResponse
     {
 
-        $project = $projectService->getById($id);
-        return new JsonResponse([
-            'id' => $project->getId(),
-            'name' => $project->getName(),
-            'tasks' => $project->getTasks()->map(function (Task $task) {
-                return [
-                    'id' => $task->getId(),
-                    'name' => $task->getName(),
-                    'priority' => $task->getPriority()->getName(),
-                    'status' => $task->getStatus()->getName(),
-                    'description' => $task->getDescription(),
-                ];
-            })->toArray(),
+        $project = $this->entityManager->getRepository(Project::class)->findOrFail($id);
 
+        $tasks = $project->getTasks()->map(function (Task $task) {
+            $taskDTO = new TasksEntityDTO($task);
+            return $taskDTO->toArray();
+        })->toArray();
+
+        return new JsonApiResponse([
+            $tasks
         ]);
 
     }
 
     #[Route('/{id}/', name: 'project_show', methods: ['GET'])]
 
-    public function show(ProjectService $projectService, $id): JsonResponse
+    public function show($id): JsonResponse
     {
-        $project = $projectService->getById($id);
-        return new JsonResponse([
-            'id' => $project->getId(),
-            'name' => $project->getName(),
-        ]);
+        $project = $this->entityManager->getRepository(Project::class)->findOrFail($id);
+        $projectDTO = new ProjectEntityDTO($project);
+        return new JsonApiResponse($projectDTO->toArray());
     }
 
     #[Route('/', name: 'project_create', methods: ['POST'])]
 
     public function create(ProjectService $projectService,
-    #[MapRequestPayload] ProjectCreateDTO $projectCreateDTO) {
+    #[MapRequestPayload] ProjectCreateRequest $projectCreateRequest): JsonResponse {
 
         $project = new Project();
-        $project->setName($projectCreateDTO->name);
+        $project->setName($projectCreateRequest->name);
         $this->entityManager->persist($project);
         $this->entityManager->flush();
-        return new JsonResponse(['id'=> $project->getId(),'name'=>$project->getName()]);
+        $projectDTO = new ProjectEntityDTO($project);
+        return new JsonApiResponse($projectDTO->toArray());
     }
 
-    #[Route('/{id}/', name: 'project_create', methods: ['PUT','PATCH'])]
+    #[Route('/{id}/', name: 'project_update', methods: ['PUT','PATCH'])]
 
     public function update(ProjectService $projectService,
-                           #[MapRequestPayload] ProjectUpdateDTO $projectCreateDTO, $id) {
+                           #[MapRequestPayload] ProjectUpdateRequest $projectUpdateRequest,
+                           $id) : JsonResponse{
 
         $project =  $projectService->getById($id);
-        $project->setName($projectCreateDTO->name);
+        $project->setName($projectUpdateRequest->name);
         $this->entityManager->persist($project);
         $this->entityManager->flush();
-        return new JsonResponse(['id'=> $project->getId(),'name'=>$project->getName()]);
+        $projectDTO = new ProjectEntityDTO($project);
+
+        return new JsonApiResponse($projectDTO->toArray());
     }
 
+
+    #[Route('/{id}/', name: 'project_delete', methods: ['DELETE'])]
+    public function delete($id) : JsonResponse{
+        $project = $this->entityManager->getRepository(Project::class)->findOrFail($id);
+        $projectDTO = new ProjectEntityDTO($project);
+
+        $this->entityManager->remove($project);
+        $this->entityManager->flush();
+        return new JsonApiResponse($projectDTO->toArray());
+    }
 
 
 }

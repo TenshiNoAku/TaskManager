@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProjectRepository;
 use App\Traits\GeneratedIdTrait;
 use App\Traits\CreatedAtTrait;
+use App\Repository\StatusRepository;
 use App\Traits\UpdatedAtTrait;
 use Doctrine\ORM\Mapping as ORM;
 

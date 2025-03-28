@@ -1,13 +1,15 @@
 <?php
 
-namespace App\DTO\Create;
+namespace App\DTO\Requests\Update;
 use Symfony\Component\Validator\Constraints as Assert;
-class ProjectCreateDTO
+class StatusUpdateRequest
 {
     public function __construct(
         #[Assert\NotBlank]
         #[Assert\Length(min: 0, max:255)]
-        public readonly string $name,
-    ) {
+        public readonly string $name
+    )
+    {
+
     }
 }

@@ -18,7 +18,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 class TaskService
 {
     use EntityNotFoundTrait;
-    use HandleIdInURLTrait;
     private EntityManagerInterface $entityManager;
     private SerializerInterface $serializer;
     private RequestStack $requestStack;

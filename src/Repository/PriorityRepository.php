@@ -19,13 +19,11 @@ class PriorityRepository extends ServiceEntityRepository
         parent::__construct($registry, Priority::class);
     }
 
-    public function findWithPagination()
-    {
-        $dql = "SELECT p FROM App\Entity\Priority p";
-        $query = $this->getEntityManager()->createQuery($dql);
-        $paginator = new Paginator($query, true);
-        dd($paginator);
+    public function findWithPagination(int $page, int $perPage): Paginator {
 
+        $querybuilder = $this->createQueryBuilder('p')->orderBy('p.name', 'DESC')->setMaxResults($perPage)->setFirstResult($perPage*($page-1))->getQuery();
+        $paginator = new Paginator($querybuilder);
+        return $paginator;
     }
 
 

@@ -7,6 +7,7 @@ use App\Services\ServiceException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -15,10 +16,10 @@ class ExceptionListener
     public function onKernelException(ExceptionEvent $event) {
         $exception = $event->getThrowable();
 
-        if ($exception instanceof ServiceException) {
+        if ($exception instanceof ServiceException  || $exception instanceof UnprocessableEntityHttpException) {
             $previousException = $exception->getPrevious();
 
-            if ($previousException instanceof ValidationFailedException) {
+            if ($previousException instanceof ValidationFailedException || $exception instanceof UnprocessableEntityHttpException) {
                 $violations = new ArrayCollection($previousException->getViolations()->getIterator()->getArrayCopy());
                 $response = new JsonApiResponse($violations->map(
                     function (ConstraintViolation $violation) {

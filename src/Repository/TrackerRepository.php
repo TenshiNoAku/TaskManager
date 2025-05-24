@@ -6,8 +6,8 @@ use App\Entity\Project;
 use App\Entity\Tracker;
 use App\Services\ServiceException;
 use App\Traits\FindOfFailTrait;
-use App\Traits\HandleIdInURLTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -19,6 +19,13 @@ class TrackerRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Tracker::class);
+    }
+
+    public function findWithPagination(int $page, int $perPage): Paginator {
+
+        $querybuilder = $this->createQueryBuilder('t')->orderBy('t.name', 'DESC')->setMaxResults($perPage)->setFirstResult($perPage*($page-1))->getQuery();
+        $paginator = new Paginator($querybuilder);
+        return $paginator;
     }
 
     //    /**

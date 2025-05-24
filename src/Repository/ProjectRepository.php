@@ -4,34 +4,42 @@ namespace App\Repository;
 
 use App\Entity\Project;
 use App\Services\ServiceException;
+use App\Traits\FilterableTrait;
 use App\Traits\FindOfFailTrait;
-use App\Traits\HandleIdInURLTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\Expr\Comparison;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Response;
-
+use Doctrine\Orm\Query;
+use Doctrine\Common\Collections\Criteria;
 /**
  * @extends ServiceEntityRepository<Project>
  */
 class ProjectRepository extends ServiceEntityRepository
 {
     use FindOfFailTrait;
+    use FilterableTrait;
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Project::class);
     }
 
 
-//TODO убрать итератор
+  public function findWithPagination(int $page, int $perPage , array $orders, array $filter): Paginator {
 
+        $querybuilder = $this->createQueryBuilder('p')
+            ->setMaxResults($perPage)
+            ->setFirstResult($perPage*($page-1));
+        $querybuilder = $this->addOrdering($querybuilder, $orders);
+        $querybuilder = $this->addFiltering($querybuilder, $filter);
 
-//    public function findWithPagination(int $page) {
-//        $dql = "SELECT p FROM App\Entity\Project p";
-//        $query = $this->getEntityManager()->createQuery($dql)->setMaxResults(2)->setFirstResult(2*($page-1))->setHydrationMode(\Doctrine\ORM\Query::HYDRATE_ARRAY);
-//        $paginator = new Paginator($query, $fetchJoinCollection = true);
-//        return iterator_to_array($paginator->getIterator());
-//    }
+        $query = $querybuilder->getQuery();
+        $paginator = new Paginator($query);
+        return $paginator;
+    }
+
 
     //    /**
     //     * @return Project[] Returns an array of Project objects

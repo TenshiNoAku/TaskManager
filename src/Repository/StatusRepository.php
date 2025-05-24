@@ -6,6 +6,7 @@ use App\Entity\Project;
 use App\Entity\Status;
 use App\Traits\FindOfFailTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -19,6 +20,12 @@ class StatusRepository extends ServiceEntityRepository
         parent::__construct($registry, Status::class);
     }
 
+    public function findWithPagination(int $page, int $perPage): Paginator {
+
+        $querybuilder = $this->createQueryBuilder('s')->orderBy('s.name', 'DESC')->setMaxResults($perPage)->setFirstResult($perPage*($page-1))->getQuery();
+        $paginator = new Paginator($querybuilder);
+        return $paginator;
+    }
     //    /**
     //     * @return Project[] Returns an array of Project objects
     //     */

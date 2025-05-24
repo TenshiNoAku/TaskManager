@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\DTO\Entity\ProjectEntityDTO;
 use App\DTO\Entity\TasksEntityDTO;
+use App\DTO\PaginatorMetaDTO;
 use App\DTO\Requests\Create\ProjectCreateRequest;
 use App\DTO\Requests\JsonApiResponse;
 use App\DTO\Requests\Update\ProjectUpdateRequest;
@@ -15,6 +16,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,35 +35,20 @@ final class ProjectController extends AbstractController
 
     #[Route('/', name: 'project_index', methods: ['GET'],)]
 
-    public function index(ProjectService $projectService) : Response
+    public function index(#[MapQueryParameter] int $page=1, #[MapQueryParameter] int $per_page=100, #[MapQueryParameter] array $order = array(), #[MapQueryParameter] array $filter = array() ) : Response
     {
-        $projects = new ArrayCollection($this->entityManager->getRepository(Project::class)->findAll());
-
-        $projectDTOs = $projects->map(function (Project $project) {
-                $projectDTO = new ProjectEntityDTO($project);
-                return $projectDTO->toArray();
-            })->toArray();
-        return new JsonApiResponse($projectDTOs);
-
-    }
-
-    #[Route('/{id}/tasks/', name: 'project_tasks', methods: ['GET'])]
-
-    public function getTasks($id) : JsonResponse
-    {
-
-        $project = $this->entityManager->getRepository(Project::class)->findOrFail($id);
-
-        $tasks = $project->getTasks()->map(function (Task $task) {
-            $taskDTO = new TasksEntityDTO($task);
-            return $taskDTO->toArray();
+        $paginator = $this->entityManager->getRepository(Project::class)->findWithPagination($page,$per_page,$order,$filter);
+        $data = new  ArrayCollection(iterator_to_array($paginator->getIterator()));
+        $data = $data->map(function (Project $project) {
+            $projectDTO = new ProjectEntityDTO($project);
+            return $projectDTO->toArray();
         })->toArray();
-
-        return new JsonApiResponse([
-            $tasks
-        ]);
+        $meta = new PaginatorMetaDTO($paginator);
+        return new JsonApiResponse(data:$data,meta:$meta->toArray());
 
     }
+
+
 
     #[Route('/{id}/', name: 'project_show', methods: ['GET'])]
 
@@ -74,42 +61,34 @@ final class ProjectController extends AbstractController
 
     #[Route('/', name: 'project_create', methods: ['POST'])]
 
-    public function create(ProjectService $projectService,
+    public function create(ProjectService $service,
     #[MapRequestPayload] ProjectCreateRequest $projectCreateRequest): JsonResponse {
 
-        $project = new Project();
-        $project->setName($projectCreateRequest->name);
-        $this->entityManager->persist($project);
-        $this->entityManager->flush();
+        $project = $service->create($projectCreateRequest);
         $projectDTO = new ProjectEntityDTO($project);
         return new JsonApiResponse($projectDTO->toArray());
     }
 
     #[Route('/{id}/', name: 'project_update', methods: ['PUT','PATCH'])]
 
-    public function update(ProjectService $projectService,
+    public function update(ProjectService $service,
                            #[MapRequestPayload] ProjectUpdateRequest $projectUpdateRequest,
                            $id) : JsonResponse{
 
-        $project =  $projectService->getById($id);
-        $project->setName($projectUpdateRequest->name);
-        $this->entityManager->persist($project);
-        $this->entityManager->flush();
+        $project =  $service->update($projectUpdateRequest,$id);
         $projectDTO = new ProjectEntityDTO($project);
-
         return new JsonApiResponse($projectDTO->toArray());
     }
 
 
     #[Route('/{id}/', name: 'project_delete', methods: ['DELETE'])]
-    public function delete($id) : JsonResponse{
-        $project = $this->entityManager->getRepository(Project::class)->findOrFail($id);
+    public function delete(ProjectService $service,$id) : JsonResponse{
+        $project = $service->delete($id);
         $projectDTO = new ProjectEntityDTO($project);
-
-        $this->entityManager->remove($project);
-        $this->entityManager->flush();
         return new JsonApiResponse($projectDTO->toArray());
     }
+
+
 
 
 }

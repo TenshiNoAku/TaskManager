@@ -6,12 +6,13 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class JsonApiResponse extends JsonResponse
 {
-    public function __construct(array $data = [], int $status = 200, array $headers = [], bool $json = false)
+    public function __construct(array $data = [], int $status = 200, array $headers = [], bool $json = false, array $meta=[])
     {
         if ($status < 400){
             $data = array(
                 "success" => true,
                 "data"=>$data,
+                "meta"=>$meta
             );
         }
         else{

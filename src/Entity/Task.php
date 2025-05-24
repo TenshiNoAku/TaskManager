@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\TaskRepository;
 use App\Traits\GeneratedIdTrait;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -29,6 +31,7 @@ class Task
 
     #[ORM\ManyToOne(fetch: 'EAGER')]
     #[ORM\JoinColumn(nullable: false)]
+
     private ?Status $status = null;
 
     #[ORM\ManyToOne (fetch: 'EAGER')]
@@ -44,6 +47,25 @@ class Task
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $timeCost = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $created_by = null;
+
+    #[ORM\ManyToOne(inversedBy: 'tasks')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $developer = null;
+
+    /**
+     * @var Collection<int, BugReport>
+     */
+    #[ORM\OneToMany(targetEntity: BugReport::class, mappedBy: 'task')]
+    private Collection $bugReports;
+
+    public function __construct()
+    {
+        $this->bugReports = new ArrayCollection();
+    }
 
 
 
@@ -153,6 +175,60 @@ class Task
     public function setTimeCost(?\DateTimeInterface $timeCost): static
     {
         $this->timeCost = $timeCost;
+
+        return $this;
+    }
+
+    public function getCreatedBy(): ?User
+    {
+        return $this->created_by;
+    }
+
+    public function setCreatedBy(?User $created_by): static
+    {
+        $this->created_by = $created_by;
+
+        return $this;
+    }
+
+    public function getDeveloper(): ?User
+    {
+        return $this->developer;
+    }
+
+    public function setDeveloper(?User $developer): static
+    {
+        $this->developer = $developer;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BugReport>
+     */
+    public function getBugReports(): Collection
+    {
+        return $this->bugReports;
+    }
+
+    public function addBugReport(BugReport $bugReport): static
+    {
+        if (!$this->bugReports->contains($bugReport)) {
+            $this->bugReports->add($bugReport);
+            $bugReport->setTask($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBugReport(BugReport $bugReport): static
+    {
+        if ($this->bugReports->removeElement($bugReport)) {
+            // set the owning side to null (unless already changed)
+            if ($bugReport->getTask() === $this) {
+                $bugReport->setTask(null);
+            }
+        }
 
         return $this;
     }

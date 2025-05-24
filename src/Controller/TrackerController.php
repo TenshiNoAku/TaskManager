@@ -7,6 +7,7 @@ use App\DTO\Requests\Create\TrackerCreateRequest;
 use App\DTO\Requests\JsonApiResponse;
 use App\DTO\Requests\Update\TrackerUpdateRequest;
 use App\Entity\Tracker;
+use App\Services\TrackerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -44,35 +45,26 @@ class TrackerController extends AbstractController
     }
 
     #[Route('/', name: 'tracker_create', methods: ['POST'])]
-    public function create(#[MapRequestPayload] TrackerCreateRequest $request): JsonResponse
+    public function create(#[MapRequestPayload] TrackerCreateRequest $request, TrackerService $service): JsonResponse
     {
-        $tracker = new Tracker();
-        $tracker->setName($request->name);
-        $this->entityManager->persist($tracker);
-        $this->entityManager->flush();
-
+        $tracker = $service->create($request);
         $trackerDTO = new TrackerEntityDTO($tracker);
         return new JsonApiResponse($trackerDTO->toArray());
     }
 
     #[Route('/{id}/', name: 'tracker_update', methods: ['PUT'])]
-    public function update(#[MapRequestPayload] TrackerUpdateRequest $request, $id): JsonResponse
+    public function update(#[MapRequestPayload] TrackerUpdateRequest $request, TrackerService $service ,$id): JsonResponse
     {
-        $tracker = $this->entityManager->getRepository(Tracker::class)->findOrFail($id);
-        $tracker->setName($request->name);
-        $this->entityManager->persist($tracker);
-        $this->entityManager->flush();
+        $tracker = $service->update($request,$id);
         $trackerDTO = new TrackerEntityDTO($tracker);
         return new JsonApiResponse($trackerDTO->toArray());
     }
 
     #[Route('/{id}/', name: 'tracker_delete', methods: ['DELETE'])]
-    public function delete($id): JsonResponse
+    public function delete($id, TrackerService $service): JsonResponse
     {
-        $tracker = $this->entityManager->getRepository(Tracker::class)->findOrFail($id);
+        $tracker = $service->delete($id);
         $trackerDTO = new TrackerEntityDTO($tracker);
-        $this->entityManager->remove($tracker);
-        $this->entityManager->flush();
         return new JsonApiResponse($trackerDTO->toArray());
     }
 

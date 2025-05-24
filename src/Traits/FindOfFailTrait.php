@@ -17,7 +17,6 @@ trait FindOfFailTrait
             ->getValidator();
 
         $violations = $validator->validate($id, [new Assert\Range(['min' => 0, 'max' => 2147483647])]);
-
         if (count($violations) !== 0) {
             throw new ServiceException(400,
                 array('code'=>400,'message' => $violations[0]->getMessage(), 'invalidValue' => $id, 'propertyPath' => 'id')

@@ -7,6 +7,7 @@ use App\DTO\Requests\Create\PriorityCreateRequest;
 use App\DTO\Requests\JsonApiResponse;
 use App\DTO\Requests\Update\PriorityUpdateRequest;
 use App\Entity\Priority;
+use App\Services\PriorityService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -46,38 +47,28 @@ class PriorityController extends AbstractController
     }
 
     #[Route('/{id}/', name: 'priority_update', methods: ['PUT'])]
-    public function update(#[MapRequestPayload] PriorityUpdateRequest $request, $id): JsonResponse
+    public function update(#[MapRequestPayload] PriorityUpdateRequest $request, PriorityService $service,$id): JsonResponse
     {
-        $priority = $this->entityManager->getRepository(Priority::class)->findOrFail($id);
-        $priority->setName($request->name);
-
-        $this->entityManager->persist($priority);
-        $this->entityManager->flush();
-
+        $priority = $service->update($request,$id);
         $priorityDTO = new PriorityEntityDTO($priority);
         return new JsonApiResponse($priorityDTO->toArray());
 
     }
 
     #[Route('/', name: 'priority_create', methods: ['POST'])]
-    public function create(#[MapRequestPayload] PriorityCreateRequest $request): JsonResponse
+    public function create(#[MapRequestPayload] PriorityCreateRequest $request, PriorityService $service): JsonResponse
     {
-        $priority = new Priority();
-        $priority->setName($request->name);
-        $this->entityManager->persist($priority);
-        $this->entityManager->flush();
+        $priority = $service->create($request);
         $priorityDTO = new PriorityEntityDTO($priority);
         return new JsonApiResponse($priorityDTO->toArray());
     }
 
 
     #[Route('/{id}/', name: 'priority_delete', methods: ['DELETE'])]
-    public function delete($id): JsonResponse
+    public function delete($id, PriorityService $service): JsonResponse
     {
-        $priority = $this->entityManager->getRepository(Priority::class)->findOrFail($id);
+        $priority = $service->delete($id);
         $priorityDTO = new PriorityEntityDTO($priority);
-        $this->entityManager->remove($priority);
-        $this->entityManager->flush();
         return new JsonApiResponse($priorityDTO->toArray());
 
     }

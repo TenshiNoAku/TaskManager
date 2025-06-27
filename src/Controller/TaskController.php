@@ -81,4 +81,12 @@ class TaskController extends AbstractController
     }
 
 
+    #[Route('/{id}/test/',name: 'task_test', methods: ['GET'])]
+    public function test($id)
+    {
+        $task = $this->entityManager->getRepository(Task::class)->findOrFail($id);
+        $task->calculatePriority($this->entityManager);
+        $taskDTO = new TasksEntityDTO($task);
+        return new JsonApiResponse($taskDTO->toArray());
+    }
 }

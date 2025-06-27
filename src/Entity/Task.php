@@ -6,6 +6,7 @@ use App\Repository\TaskRepository;
 use App\Traits\GeneratedIdTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,6 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
 class Task
 {
     use GeneratedIdTrait;
+
 
     #[ORM\ManyToOne(fetch: 'EAGER', inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
@@ -62,13 +64,22 @@ class Task
     #[ORM\OneToMany(targetEntity: BugReport::class, mappedBy: 'task')]
     private Collection $bugReports;
 
+    #[ORM\Column]
+    private ?int $confidence = 100;
+
+    #[ORM\Column]
+    private ?int $effort = 1;
+
+    #[ORM\Column]
+    private ?float $impact = 1;
+
+    #[ORM\Column]
+    private ?float $reach = 1;
+
     public function __construct()
     {
         $this->bugReports = new ArrayCollection();
     }
-
-
-
 
 
     public function getProject(): ?Project
@@ -233,4 +244,74 @@ class Task
         return $this;
     }
 
+    public function __toString(): string
+    {
+        return $this->getId()." - ".$this->getName();
+    }
+
+    public function getConfidence(): ?int
+    {
+        return $this->confidence;
+    }
+
+    public function setConfidence(int $confidence): static
+    {
+        $this->confidence = $confidence;
+
+        return $this;
+    }
+
+    public function getEffort(): ?int
+    {
+        return $this->effort;
+    }
+
+    public function setEffort(int $effort): static
+    {
+        $this->effort = $effort;
+
+        return $this;
+    }
+
+    public function getImpact(): ?float
+    {
+        return $this->impact;
+    }
+
+    public function setImpact(float $impact): static
+    {
+        $this->impact = $impact;
+
+        return $this;
+    }
+
+    public function getReach(): ?float
+    {
+        return $this->reach;
+    }
+
+    public function setReach(float $reach): static
+    {
+        $this->reach = $reach;
+
+        return $this;
+    }
+
+    public function calculatePriority(EntityManagerInterface $entityManager): static
+    {
+        $score = round(($this->reach * (1+0.5*log(1+0.4*count($this->bugReports))) * $this->confidence)/$this->effort);
+
+        $priority = $entityManager->getRepository(Priority::class)->createQueryBuilder('e')
+            ->where('e.score <= :score')
+            ->setParameter('score', $score)
+            ->orderBy('e.score', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getResult();
+        $this->setPriority($priority[0]);
+        $entityManager->persist($this);
+        $entityManager->flush();
+
+        return $this;
+    }
 }

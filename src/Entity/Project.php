@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 use \JsonSerializable;
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
-class Project implements JsonSerializable
+class Project
 {
     use GeneratedIdTrait;
 
@@ -74,12 +74,9 @@ class Project implements JsonSerializable
         return $this;
     }
 
-    public function jsonSerialize(): array
+
+    public function __toString(): string
     {
-        return array(
-            'id' => $this->id,
-            'name' => $this->name,
-            'tasks' => $this->tasks->toArray(),
-        );
+        return $this->getName();
     }
 }

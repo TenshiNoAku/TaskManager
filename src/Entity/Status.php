@@ -20,6 +20,7 @@ class Status
     private ?string $name = null;
 
 
+
     public function getName(): ?string
     {
         return $this->name;
@@ -31,4 +32,13 @@ class Status
 
         return $this;
     }
+
+    public function __toString(): string
+    {
+        return $this->getName();
+    }
+
+
+
+
 }

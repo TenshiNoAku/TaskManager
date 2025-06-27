@@ -19,6 +19,29 @@ class BugReportRepository extends ServiceEntityRepository
         parent::__construct($registry, BugReport::class);
     }
 
+    public function getUnresolvedDuplicates()
+    {
+        $qb = $this->createQueryBuilder('b');
+        return $qb->select('b')
+                ->Where($qb->expr()->isNotNull('b.is_duplicate_of'))
+                ->andWhere($qb->expr()->isNull('b.task'));
+    }
+
+    public function getUnresolvedReports()
+    {
+        $qb = $this->createQueryBuilder('b');
+        return $qb->select('b')
+            ->Where($qb->expr()->isNull('b.is_duplicate_of'))
+            ->andWhere($qb->expr()->isNull('b.task'));
+    }
+
+
+    public function getFilteredByTask($task){
+
+        $qb = $this->createQueryBuilder('b');
+
+        return $qb->select('b')->Where('b.task = :task')->setParameter('task', $task);
+    }
     //    /**
     //     * @return BugReport[] Returns an array of BugReport objects
     //     */

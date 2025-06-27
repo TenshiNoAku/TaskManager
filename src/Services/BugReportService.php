@@ -8,10 +8,11 @@ use App\Entity\BugReport;
 use App\Entity\Task;
 use App\Repository\BugReportRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class BugReportService
 {
-    public function __construct(private BugReportRepository $bugReportRepository, private EntityManagerInterface $entityManager)
+    public function __construct(private BugReportRepository $bugReportRepository, private EntityManagerInterface $entityManager, private HttpClientInterface $httpClient)
     {
 
     }
@@ -46,8 +47,20 @@ class BugReportService
 
         $bug_report = new BugReport();
 
+        $newRequest = ["q1"=>$request->text];
+        $response = $this->httpClient->request(
+            'POST',
+            'http://127.0.0.1:5000/items/',
+            ['headers' => [
+                'Content-Type' => 'application/json',
+            ],'json'=>$newRequest])?->toArray();
+        if (isset($response['id'])) {
+            $bug_report->setIsDuplicateOf($this->bugReportRepository->findOrFail((int)$response['id']));
+        }
         $bug_report->setName($request->name);
         $bug_report->setText($request->text);
+
+
         $this->entityManager->persist($bug_report);
         $this->entityManager->flush();
         return $bug_report;
@@ -61,8 +74,10 @@ class BugReportService
             $bug_report->setTask($task);
             $this->entityManager->persist($bug_report);
             $this->entityManager->flush();
+            $task->calculatePriority($this->entityManager);
             return $bug_report;
         }
+
         throw new ServiceException(400, ['message' => 'Not duplicate or duplicate task is not set'],);
     }
 

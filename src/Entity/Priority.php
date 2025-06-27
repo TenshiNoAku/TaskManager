@@ -14,6 +14,9 @@ class Priority implements JsonSerializable
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $score = null;
+
 
     public function getName(): ?string
     {
@@ -33,5 +36,22 @@ class Priority implements JsonSerializable
             'id' => $this->id,
             'name' => $this->name
             );
+    }
+
+    public function __toString(): string
+    {
+        return $this->getName();
+    }
+
+    public function getScore(): ?int
+    {
+        return $this->score;
+    }
+
+    public function setScore(?int $score): static
+    {
+        $this->score = $score;
+
+        return $this;
     }
 }
